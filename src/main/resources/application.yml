@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    hikari.maximum-pool-size: 4
+    url: jdbc:postgresql://ec2-52-22-136-117.compute-1.amazonaws.com/d54fo8jkqfctb2
+    username: sinbdxokrvqfvu
+    password: 8883670e7262f415e3ef2786473af9b8406555324bf23c2163e3f3c02f4cc1aa
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database: postgresql
+    hibernate:
+      dialect: org.hibernate.dialect.PostgreSQLDialect
+      ddl-auto: update
+    show-sql: true # 쿼리 보기
+    properties:
+      hibernate:
+        format_sql: true # 한줄로 나오는 디버그 쿼리문을 포맷팅해줌
+        default_batch_fetch_size: 100 # jpa에서 복잡한 쿼리를 사용할때 한번에 벌크로 셀렉트
+    open-in-view: false
+  sql:
+    init:
+      platform: postgres
+jwt:
+  secret-key: fast_campus_sns-application-2022.secret_key
+  token:
+    expired-time-ms: 2592000000 # 30days
