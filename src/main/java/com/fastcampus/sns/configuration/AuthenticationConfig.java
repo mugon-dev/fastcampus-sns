@@ -57,7 +57,7 @@ public class AuthenticationConfig {
                    )
                    .authorizeHttpRequests(authorize -> authorize
                        .anyRequest()
-                       .denyAll())
+                       .permitAll())
                    .requestCache(RequestCacheConfigurer::disable)
                    .securityContext(AbstractHttpConfigurer::disable)
                    .sessionManagement(AbstractHttpConfigurer::disable)
