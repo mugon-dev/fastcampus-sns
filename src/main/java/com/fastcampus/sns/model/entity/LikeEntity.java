@@ -18,25 +18,24 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
 @Entity
-@Table(name = "\"post\"") // 기존에 존재하는 테이블 때문에 \" 사용
+@Table(name = "\"like\"") // 기존에 존재하는 테이블 때문에 \" 사용
 @Setter
 @Getter
-@SQLDelete(sql = "UPDATE \"post\" SET deleted_at = NOW() where id=?")
+@SQLDelete(sql = "UPDATE \"like\" SET deleted_at = NOW() where id=?")
 @Where(clause = "deleted_at is NULL")
-public class PostEntity {
+public class LikeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "title")
-    private String title;
-    @Column(name = "body", columnDefinition = "TEXT")
-    private String body;
-
     @ManyToOne
     @JoinColumn(name = "user_id")
     private UserEntity user;
+
+    @ManyToOne
+    @JoinColumn(name = "post_id")
+    private PostEntity post;
 
     @Column(name = "registered_at")
     private Timestamp registeredAt;
@@ -47,11 +46,10 @@ public class PostEntity {
     @Column(name = "deleted_at")
     private Timestamp deletedAt;
 
-    public static PostEntity of(String title, String body, UserEntity userEntity) {
-        PostEntity entity = new PostEntity();
-        entity.setTitle(title);
-        entity.setBody(body);
+    public static LikeEntity of(UserEntity userEntity, PostEntity postEntity) {
+        LikeEntity entity = new LikeEntity();
         entity.setUser(userEntity);
+        entity.setPost(postEntity);
         return entity;
     }
 
