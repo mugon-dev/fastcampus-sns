@@ -6,11 +6,12 @@ import com.fastcampus.sns.model.AlarmArgs;
 import com.fastcampus.sns.model.AlarmType;
 import com.fastcampus.sns.model.Comment;
 import com.fastcampus.sns.model.Post;
-import com.fastcampus.sns.model.entity.AlarmEntity;
 import com.fastcampus.sns.model.entity.CommentEntity;
 import com.fastcampus.sns.model.entity.LikeEntity;
 import com.fastcampus.sns.model.entity.PostEntity;
 import com.fastcampus.sns.model.entity.UserEntity;
+import com.fastcampus.sns.model.event.AlarmEvent;
+import com.fastcampus.sns.producer.AlarmProducer;
 import com.fastcampus.sns.repository.AlarmEntityRepository;
 import com.fastcampus.sns.repository.CommentEntityRepository;
 import com.fastcampus.sns.repository.LikeEntityRepository;
@@ -32,6 +33,7 @@ public class PostService {
     private final CommentEntityRepository commentEntityRepository;
     private final AlarmEntityRepository alarmEntityRepository;
     private final AlarmService alarmService;
+    private final AlarmProducer alarmProducer;
 
 
     @Transactional
@@ -46,8 +48,7 @@ public class PostService {
         PostEntity postEntity = getPostOrException(postId);
         if (postEntity.getUser() != userEntity) {
             throw new SnsApplicationException(ErrorCode.INVALID_PERMISSION,
-                String.format("%s has no permission with %s",
-                    userName, postId));
+                String.format("%s has no permission with %s", userName, postId));
         }
         postEntity.setTitle(title);
         postEntity.setBody(body);
@@ -60,8 +61,7 @@ public class PostService {
         PostEntity postEntity = getPostOrException(postId);
         if (postEntity.getUser() != userEntity) {
             throw new SnsApplicationException(ErrorCode.INVALID_PERMISSION,
-                String.format("%s has no permission with %s",
-                    userName, postId));
+                String.format("%s has no permission with %s", userName, postId));
         }
         commentEntityRepository.deleteAllByPost(postEntity);
         likeEntityRepository.deleteAllByPost(postEntity);
@@ -90,10 +90,9 @@ public class PostService {
                                         postId));
                             });
         likeEntityRepository.save(LikeEntity.of(userEntity, postEntity));
-        AlarmEntity alarmEntity = alarmEntityRepository.save(
-            AlarmEntity.of(postEntity.getUser(), AlarmType.NEW_LIKE_ON_POST,
-                new AlarmArgs(userEntity.getId(), postEntity.getId())));
-        alarmService.send(alarmEntity.getId(), postEntity.getUser().getId());
+        alarmProducer.send(new AlarmEvent(postEntity.getUser()
+                                                    .getId(), AlarmType.NEW_LIKE_ON_POST,
+            new AlarmArgs(userEntity.getId(), postEntity.getId())));
 
     }
 
@@ -108,10 +107,10 @@ public class PostService {
         UserEntity userEntity = getUserOrException(userName);
         PostEntity postEntity = getPostOrException(postId);
         commentEntityRepository.save(CommentEntity.of(userEntity, postEntity, comment));
-        AlarmEntity alarmEntity = alarmEntityRepository.save(
-            AlarmEntity.of(postEntity.getUser(), AlarmType.NEW_COMMENT_ON_POST,
-                new AlarmArgs(userEntity.getId(), postEntity.getId())));
-        alarmService.send(alarmEntity.getId(), postEntity.getUser().getId());
+        alarmProducer.send(new AlarmEvent(postEntity.getUser()
+                                                    .getId(), AlarmType.NEW_COMMENT_ON_POST,
+            new AlarmArgs(userEntity.getId(), postEntity.getId())));
+
     }
 
     public Page<Comment> getComments(Integer postId, Pageable pageable) {
@@ -122,19 +121,15 @@ public class PostService {
 
     private PostEntity getPostOrException(Integer postId) {
         return postEntityRepository.findById(postId)
-                                   .orElseThrow(() ->
-                                       new SnsApplicationException(
-                                           ErrorCode.POST_NOT_FOUND,
-                                           String.format("%s not found",
-                                               postId)));
+                                   .orElseThrow(
+                                       () -> new SnsApplicationException(ErrorCode.POST_NOT_FOUND,
+                                           String.format("%s not found", postId)));
     }
 
     private UserEntity getUserOrException(String userName) {
         return userEntityRepository.findByUserName(userName)
                                    .orElseThrow(
-                                       () -> new SnsApplicationException(
-                                           ErrorCode.USER_NOT_FOUND,
-                                           String.format("%s not found",
-                                               userName)));
+                                       () -> new SnsApplicationException(ErrorCode.USER_NOT_FOUND,
+                                           String.format("%s not found", userName)));
     }
 }

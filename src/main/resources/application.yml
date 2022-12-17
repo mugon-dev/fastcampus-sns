@@ -21,6 +21,28 @@ spring:
       platform: postgres
   redis:
     url: redis://:p04901b191fdd5aa5817a48ce432f2a44bc4e133837c011b73b7b11b16eece333@ec2-23-23-247-176.compute-1.amazonaws.com:7719
+  kafka:
+    properties:
+      security.protocol: SASL_SSL
+      sasl.mechanism: SCRAM-SHA-256
+      sasl.jaas.config: org.apache.kafka.common.security.scram.ScramLoginModule required username="csowptyq" password="HbZMmxHGACzlTnbUSUOqFeOJuGypwhNi";
+    consumer:
+      properties.spring.json.trusted.packages: "*"
+      bootstrap-servers: dory-01.srvs.cloudkafka.com:9094,dory-02.srvs.cloudkafka.com:9094,dory-03.srvs.cloudkafka.com:9094
+      group-id: alarm
+      auto-offset-reset: latest # 새로운 consumer가 등록되었을때 어디서부터 읽을 것인지
+      key-deserializer: org.apache.kafka.common.serialization.IntegerDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+    listener:
+      ack-mode: MANUAL
+    producer:
+      bootstrap-servers: dory-01.srvs.cloudkafka.com:9094,dory-02.srvs.cloudkafka.com:9094,dory-03.srvs.cloudkafka.com:9094
+      key-serializer: org.apache.kafka.common.serialization.IntegerSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties.enable.idempotence: false
+    topic:
+      alarm: csowptyq-alarm
+
 jwt:
   secret-key: fast_campus_sns-application-2022.secret_key
   token:
